@@ -15,7 +15,7 @@ scrapy crawl trulia_sold
 from the project directory. To scrape listings for another city, specify the `city` and `state` arguments using the `-a` flag. For example,
 
 ```
-scrapy crawl trulia_sold -a state=NY city=New_York
+scrapy crawl trulia_sold -a state=NY -a city=New_York
 ```
 will scrape all listings reachable from [https://www.trulia.com/sold/New_York,NY/](https://www.trulia.com/sold/New_York,NY/).
 

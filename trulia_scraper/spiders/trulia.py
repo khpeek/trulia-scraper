@@ -8,7 +8,7 @@ from trulia_scraper.items import TruliaItem, TruliaItemLoader
 class TruliaSpider(scrapy.Spider):
     name = 'trulia'
     allowed_domains = ['trulia.com']
-    custom_settings = {'FEED_URI': 'data/data_sold_%(state)s_%(city)s_%(time)s.jl', 'FEED_FORMAT': 'jsonlines'}
+    custom_settings = {'FEED_URI': 'data/data_for_sale_%(state)s_%(city)s_%(time)s.jl', 'FEED_FORMAT': 'jsonlines'}
 
     def __init__(self, state='CA', city='San_Francisco', *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -1,27 +1,35 @@
 # trulia-scraper
-Scraper for real estate listings on Trulia.com implemented in Python with Scrapy.
+Scraper for real estate listings on [Trulia.com](https://www.trulia.com/) implemented in Python with Scrapy.
 
 ## Basic usage
 To crawl the scraper, you need to install [Python 3](https://www.python.org/download/releases/3.0/), as well as the [Scrapy](https://pypi.python.org/pypi/Scrapy) framework and the [Pyparsing](https://pypi.python.org/pypi/pyparsing/2.2.0) module. The scraper features two spiders:
 
-1. `trulia`, which is designed to scrape all real estate listings which are for sale in a given state and city starting for a URL such as [https://www.trulia.com/CA/San_Francisco/](https://www.trulia.com/CA/San_Francisco/);
-2. `trulia_sold`, which similarly scrapes listings of recently sold properties starting from URLs like [https://www.trulia.com/sold/San_Francisco,CA/](https://www.trulia.com/sold/San_Francisco,CA/).
+1. `trulia`, which scrapes all real estate listings which are _for sale_ in a given state and city starting from a URL such as [https://www.trulia.com/CA/San_Francisco/](https://www.trulia.com/CA/San_Francisco/);
+2. `trulia_sold`, which similarly scrapes listings of recently _sold_ properties starting from a URL such as [https://www.trulia.com/sold/San_Francisco,CA/](https://www.trulia.com/sold/San_Francisco,CA/).
 
-To, for example, crawl `trulia_sold` in the state of `CA` in the city of `San_Francisco` (the default locale for both spiders), simply run the command
+To crawl the `trulia_sold` spider for the state of `CA` and city of `San_Francisco` (the default locale), simply run the command
 
 ```
 scrapy crawl trulia_sold
 ```
-from the project directory. This will generate a [feed export](https://doc.scrapy.org/en/latest/topics/feed-exports.html) as a [JSON lines](http://jsonlines.org/) (`.jl`) file in one of the following default locations:
-
-* `data/data_sold.jl` for data scraped by the `trulia_sold` spider,
-* `data/data_for_sale.jl` for data scraped by the `trulia` spider.
-
-(The repository includes instances of both files scraped on 22 October 2016). You can choose a different file location and output format using the `--output` and `--output-format` command-line options (see `scrapy crawl --help` for details); supported formats include regular JSON and CSV.
-
-To scrape listings from a city other than San Francisco, specify the `city` and `state` arguments using the `-a` flag. For example,
+from the project directory. To scrape listings for another city, specify the `city` and `state` arguments using the `-a` flag. For example,
 
 ```
-scrapy crawl trulia_sold -a state=NY city=New_York -o data/data_New_York.jl
+scrapy crawl trulia_sold -a state=NY city=New_York
 ```
-will scrape all listings reachable from [https://www.trulia.com/sold/New_York,NY/](https://www.trulia.com/sold/New_York,NY/) and save the data to an accordingly named output file `data_New_York.jl` in the `data` directory.
+will scrape all listings reachable from [https://www.trulia.com/sold/New_York,NY/](https://www.trulia.com/sold/New_York,NY/).
+
+By default, the scraped data will be stored (using Scrapy's [feed export](https://doc.scrapy.org/en/latest/topics/feed-exports.html)) in the `data` directory as a [JSON lines](http://jsonlines.org/) (`.jl`) file following the naming convention
+
+```
+data_{sold|for_sale}_{state}_{city}_{time}.jl
+```
+
+where `{sold|for_sale}` is `sold` or `for_sale` for the `trulia` and `trulia_sold` spiders, respectively, `{state}` and `{city}` are the specified state and city (e.g. `CA` and `San_Francisco`, respectively), and `{time}` represents the current UTC time.
+
+If you prefer a different output file name and format, you can specify this from the command line using Scrapy's `-o` option. For example,
+
+```
+scrapy crawl trulia_sold -a state=WA -city=Seattle -o data_Seattle.csv
+```
+will output the data in CSV format as `data_Seattle.csv`. (Scrapy automatically picks up the file format from the specified file extension).

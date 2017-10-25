@@ -8,12 +8,13 @@ from trulia_scraper.items import TruliaItem, TruliaItemLoader
 class TruliaSpider(scrapy.Spider):
     name = 'trulia_sold'
     allowed_domains = ['trulia.com']
-    custom_settings = {'FEED_URI': 'data/data_sold.jl', 'FEED_FORMAT': 'jsonlines'}
+    custom_settings = {'FEED_URI': 'data/data_sold_%(state)s_%(city)s_%(time)s.jl', 'FEED_FORMAT': 'jsonlines'}
 
     def __init__(self, state='CA', city='San_Francisco', *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.base_url = 'http://trulia.com/sold/{city},{state}/'.format(state=state, city=city)
-        self.start_urls = [self.base_url]
+        self.state = state
+        self.city = city
+        self.start_urls = ['http://trulia.com/sold/{city},{state}/'.format(state=state, city=city)]
         self.le = LinkExtractor(allow=r'^https://www.trulia.com/homes/.+/sold/')
 
     def parse(self, response):
@@ -28,6 +29,8 @@ class TruliaSpider(scrapy.Spider):
 
     def parse_property_page(self, response):
         l = TruliaItemLoader(item=TruliaItem(), response=response)
+
+        l.add_value('url', response.url)
         l.add_xpath('address', '//*[@data-role="address"]/text()')
         l.add_xpath('city_state', '//*[@data-role="cityState"]/text()')
         l.add_xpath('neighborhood', '//*[@data-role="cityState"]/parent::h1/following-sibling::span/a/text()')

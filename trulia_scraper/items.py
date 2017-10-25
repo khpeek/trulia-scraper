@@ -5,6 +5,7 @@ import scrapy
 
 
 class TruliaItem(scrapy.Item):
+    url = scrapy.Field()
     address = scrapy.Field()
     city_state = scrapy.Field()
     neighborhood = scrapy.Field()

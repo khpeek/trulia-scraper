@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import scrapy
+import math
 from scrapy.linkextractors import LinkExtractor
-import trulia_scraper.parsing as parsing
+# import trulia_scraper.parsing as parsing
 from trulia_scraper.items import TruliaItem, TruliaItemLoader
+from trulia_scraper.parsing import get_number_from_string
 
 
 class TruliaSpider(scrapy.Spider):
@@ -18,8 +20,12 @@ class TruliaSpider(scrapy.Spider):
         self.le = LinkExtractor(allow=r'^https://www.trulia.com/property')
 
     def parse(self, response):
-        pagination = response.css('.paginationContainer').xpath('.//*/text()[contains(., "Results")]').extract_first()
-        N = parsing.get_number_of_pages_to_scrape(pagination)
+        pagination = response.css('.paginationContainer').xpath('.//*/text()[contains(., "Results")]')
+        number_of_results = get_number_from_string(pagination.re_first(r'^1 - 30 of ([\d,]+) Results$'))
+        N = math.ceil(number_of_results/30)
+        self.logger.info("Found {number_of_results} results in total with at most 30 results per page. \
+            Proceeding to scrape all {N} pages...".format(number_of_results=number_of_results, N=N))
+
         for url in [response.urljoin("{n}_p/".format(n=n)) for n in range(1, N+1)]:
             yield scrapy.Request(url=url, callback=self.parse_index_page)
 
@@ -35,7 +41,13 @@ class TruliaSpider(scrapy.Spider):
         l.add_xpath('city_state', '//*[@data-role="cityState"]/text()')
         l.add_xpath('neighborhood', '//*[@data-role="cityState"]/parent::h1/following-sibling::span/a/text()')
         details = l.nested_css('.homeDetailsHeading')
-        details.add_xpath('overview', './/span[contains(text(), "Overview")]/parent::div/following-sibling::div[1]//li/text()')
+        overview = details.nested_xpath('.//span[contains(text(), "Overview")]/parent::div/following-sibling::div[1]')
+        overview.add_xpath('overview', xpath='.//li/text()')
+        overview.add_xpath('area', xpath='.//li/text()', re=r'([\d,]+) sqft$')
+        overview.add_xpath('lot_size', xpath='.//li/text()', re=r'([\d,]+) (acres|sqft) lot size$')
+        # details.add_xpath('overview', './/span[contains(text(), "Overview")]/parent::div/following-sibling::div[1]//li/text()')
+        # details.add_xpath('area', './/span[contains(text(), "Overview")]/parent::div/following-sibling::div[1]//li/text()', re=r'(.+) sqft$')
+
         l.add_css('description', '#descriptionContainer *::text')
 
         price_events = details.nested_xpath('.//*[text() = "Price History"]/parent::*/following-sibling::*[1]/div/div')

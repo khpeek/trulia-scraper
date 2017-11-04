@@ -2,6 +2,7 @@
 from scrapy.loader import ItemLoader
 from scrapy.loader.processors import TakeFirst, MapCompose, Identity, Compose
 import scrapy
+from trulia_scraper.parsing import remove_empty, get_number_from_string
 
 
 class TruliaItem(scrapy.Item):
@@ -31,21 +32,23 @@ class TruliaItem(scrapy.Item):
     public_records = scrapy.Field()
     public_records_date_updated = scrapy.Field()
 
-
-def remove_empty(l):
-	'''Remove items which evaluate to False (such as empty strings) from the input list.'''
-	return [x for x in l if x]
+    # Items generated from further parsing of 'raw' scraped data
+    area = scrapy.Field()
+    lot_size = scrapy.Field()
 
 
 class TruliaItemLoader(ItemLoader):
-	default_input_processor = MapCompose(str.strip)
-	default_output_processor = TakeFirst()
+    default_input_processor = MapCompose(str.strip)
+    default_output_processor = TakeFirst()
 
-	overview_out = Identity()
-	description_out = Compose(remove_empty)
-	prices_out = Identity()
-	dates_out = Compose(remove_empty)
-	events_out = Compose(remove_empty)
+    overview_out = Identity()
+    description_out = Compose(remove_empty)
+    prices_out = Identity()
+    dates_out = Compose(remove_empty)
+    events_out = Compose(remove_empty)
 
-	listing_information_out = Identity()
-	public_records_out = Identity()
+    listing_information_out = Identity()
+    public_records_out = Identity()
+
+    area_out = Compose(TakeFirst(), get_number_from_string)
+    lot_size_out = Identity()

@@ -23,7 +23,7 @@ class TruliaSpider(scrapy.Spider):
 
     def parse(self, response):
         N = trulia.TruliaSpider.get_number_of_pages_to_scrape(response)
-        self.logger.info("Determined that property pages are contained on {N} different index pages, each containing at most 30 properties. Proceeding to scrape each index page...")
+        self.logger.info("Determined that property pages are contained on {N} different index pages, each containing at most 30 properties. Proceeding to scrape each index page...".format(N=N))
         for url in [response.urljoin("{n}_p/".format(n=n)) for n in range(1, N+1)]:
             yield scrapy.Request(url=url, callback=self.parse_index_page)
 

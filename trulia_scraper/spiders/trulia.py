@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import math
+import datetime
 from scrapy.linkextractors import LinkExtractor
 # import trulia_scraper.parsing as parsing
 from trulia_scraper.items import TruliaItem, TruliaItemLoader
@@ -35,25 +36,7 @@ class TruliaSpider(scrapy.Spider):
 
     def parse_property_page(self, response):
         l = TruliaItemLoader(item=TruliaItem(), response=response)
-
-        l.add_value('url', response.url)
-        l.add_xpath('address', '//*[@data-role="address"]/text()')
-        l.add_xpath('city_state', '//*[@data-role="cityState"]/text()')
-        l.add_xpath('neighborhood', '//*[@data-role="cityState"]/parent::h1/following-sibling::span/a/text()')
-        details = l.nested_css('.homeDetailsHeading')
-        overview = details.nested_xpath('.//span[contains(text(), "Overview")]/parent::div/following-sibling::div[1]')
-        overview.add_xpath('overview', xpath='.//li/text()')
-        overview.add_xpath('area', xpath='.//li/text()', re=r'([\d,]+) sqft$')
-        overview.add_xpath('lot_size', xpath='.//li/text()', re=r'([\d,]+) (acres|sqft) lot size$')
-        # details.add_xpath('overview', './/span[contains(text(), "Overview")]/parent::div/following-sibling::div[1]//li/text()')
-        # details.add_xpath('area', './/span[contains(text(), "Overview")]/parent::div/following-sibling::div[1]//li/text()', re=r'(.+) sqft$')
-
-        l.add_css('description', '#descriptionContainer *::text')
-
-        price_events = details.nested_xpath('.//*[text() = "Price History"]/parent::*/following-sibling::*[1]/div/div')
-        price_events.add_xpath('prices', './div[contains(text(), "$")]/text()')
-        price_events.add_xpath('dates', './div[contains(text(), "$")]/preceding-sibling::div/text()')
-        price_events.add_xpath('events', './div[contains(text(), "$")]/following-sibling::div/text()')
+        self.load_common_fields(item_loader=l, response=response)
 
         listing_information = l.nested_xpath('//span[text() = "LISTING INFORMATION"]')
         listing_information.add_xpath('listing_information', './parent::div/following-sibling::ul[1]/li/text()')
@@ -63,4 +46,44 @@ class TruliaSpider(scrapy.Spider):
         public_records.add_xpath('public_records', './parent::div/following-sibling::ul[1]/li/text()')
         public_records.add_xpath('public_records_date_updated', './following-sibling::span/text()', re=r'^Updated: (.*)')
 
-        return l.load_item()
+        item = l.load_item()
+        self.post_process(item=item)
+        return item
+
+    @staticmethod
+    def load_common_fields(item_loader, response):
+        '''Load field values which are common to "on sale" and "recently sold" properties.'''
+        item_loader.add_value('url', response.url)
+        item_loader.add_xpath('address', '//*[@data-role="address"]/text()')
+        item_loader.add_xpath('city_state', '//*[@data-role="cityState"]/text()')
+        item_loader.add_xpath('price', '//span[@data-role="price"]/text()', re=r'\$([\d,]+)')
+        item_loader.add_xpath('neighborhood', '//*[@data-role="cityState"]/parent::h1/following-sibling::span/a/text()')
+        details = item_loader.nested_css('.homeDetailsHeading')
+        overview = details.nested_xpath('.//span[contains(text(), "Overview")]/parent::div/following-sibling::div[1]')
+        overview.add_xpath('overview', xpath='.//li/text()')
+        overview.add_xpath('area', xpath='.//li/text()', re=r'([\d,]+) sqft$')
+        overview.add_xpath('lot_size', xpath='.//li/text()', re=r'([\d,.]+) (?:acres|sqft) lot size$')
+        overview.add_xpath('lot_size_units', xpath='.//li/text()', re=r'[\d,.]+ (acres|sqft) lot size$')
+        overview.add_xpath('price_per_square_foot', xpath='.//li/text()', re=r'\$([\d,.]+)/sqft$')
+        overview.add_xpath('bedrooms', xpath='.//li/text()', re=r'(\d+) (?:Beds|Bed|beds|bed)$')
+        overview.add_xpath('bathrooms', xpath='.//li/text()', re=r'(\d+) (?:Baths|Bath|baths|bath)$')
+        overview.add_xpath('year_built', xpath='.//li/text()', re=r'Built in (\d+)')
+        overview.add_xpath('days_on_Trulia', xpath='.//li/text()', re=r'([\d,]) days on Trulia$')
+        overview.add_xpath('views', xpath='.//li/text()', re=r'([\d,]+) views$')
+        item_loader.add_css('description', '#descriptionContainer *::text')
+
+        price_events = details.nested_xpath('.//*[text() = "Price History"]/parent::*/following-sibling::*[1]/div/div')
+        price_events.add_xpath('prices', './div[contains(text(), "$")]/text()')
+        price_events.add_xpath('dates', './div[contains(text(), "$")]/preceding-sibling::div/text()')
+        price_events.add_xpath('events', './div[contains(text(), "$")]/following-sibling::div/text()')
+
+    @staticmethod
+    def post_process(item):
+        '''Add any additional data to an item after loading it'''
+        if item.get('dates') is not None:
+            dates = [datetime.datetime.strptime(date, '%m/%d/%Y') for date in item['dates']]
+            prices = [int(price.lstrip('$').replace(',', '')) for price in item['prices']]
+            item['price_history'] = sorted(list(zip(dates, prices, item['events'])), key=lambda x: x[0])
+
+
+

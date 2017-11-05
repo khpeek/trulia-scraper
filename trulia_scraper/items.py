@@ -9,6 +9,7 @@ class TruliaItem(scrapy.Item):
     url = scrapy.Field()
     address = scrapy.Field()
     city_state = scrapy.Field()
+    price = scrapy.Field()              # for items on sale only
     neighborhood = scrapy.Field()
     overview = scrapy.Field()
     description = scrapy.Field()
@@ -35,12 +36,21 @@ class TruliaItem(scrapy.Item):
     # Items generated from further parsing of 'raw' scraped data
     area = scrapy.Field()
     lot_size = scrapy.Field()
+    lot_size_units = scrapy.Field()
+    price_per_square_foot = scrapy.Field()      # For properties on sale only
+    bedrooms = scrapy.Field()
+    bathrooms = scrapy.Field()
+    year_built = scrapy.Field()
+    days_on_Trulia = scrapy.Field()
+    views = scrapy.Field()
+    price_history = scrapy.Field()
 
 
 class TruliaItemLoader(ItemLoader):
     default_input_processor = MapCompose(str.strip)
     default_output_processor = TakeFirst()
 
+    price_out = Compose(TakeFirst(), lambda s: int(s.replace(',', '')))
     overview_out = Identity()
     description_out = Compose(remove_empty)
     prices_out = Identity()
@@ -51,4 +61,10 @@ class TruliaItemLoader(ItemLoader):
     public_records_out = Identity()
 
     area_out = Compose(TakeFirst(), get_number_from_string)
-    lot_size_out = Identity()
+    lot_size_out = Compose(TakeFirst(), get_number_from_string)
+    price_per_square_foot_out = Compose(TakeFirst(), get_number_from_string)
+    bedrooms_out = Compose(TakeFirst(), int)
+    bathrooms_out = Compose(TakeFirst(), int)
+    year_built_out = Compose(TakeFirst(), int)
+    days_on_Trulia_out = Compose(TakeFirst(), lambda s: int(s.replace(',', '')))
+    views_out = Compose(TakeFirst(), lambda s: int(s.replace(',', '')))

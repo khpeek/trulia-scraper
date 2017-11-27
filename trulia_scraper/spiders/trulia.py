@@ -12,7 +12,7 @@ from scrapy.utils.conf import closest_scrapy_cfg
 class TruliaSpider(scrapy.Spider):
     name = 'trulia'
     allowed_domains = ['trulia.com']
-    custom_settings = {'FEED_URI': os.path.join(os.path.dirname(closest_scrapy_cfg()), 'data/data_sold_%(state)s_%(city)s_%(time)s.jl'), 
+    custom_settings = {'FEED_URI': os.path.join(os.path.dirname(closest_scrapy_cfg()), 'data/data_for_sale_%(state)s_%(city)s_%(time)s.jl'), 
                        'FEED_FORMAT': 'jsonlines'}
 
     def __init__(self, state='CA', city='San_Francisco', *args, **kwargs):

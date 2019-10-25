@@ -17,6 +17,8 @@ NEWSPIDER_MODULE = 'trulia_scraper.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'trulia_scraper (+http://www.yourdomain.com)'
+# USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'
+
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -88,3 +90,9 @@ ROBOTSTXT_OBEY = True
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+DOWNLOADER_MIDDLEWARES = {
+    # 'trulia_scraper.middlewares.CustomProxyMiddleware': 10,
+    # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 20,
+    'trulia_scraper.middlewares.UserAgentMiddleware': 543,
+}

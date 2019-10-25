@@ -1,70 +1,129 @@
 # -*- coding: utf-8 -*-
-from scrapy.loader import ItemLoader
-from scrapy.loader.processors import TakeFirst, MapCompose, Identity, Compose
+from scrapy.loader.processors import TakeFirst, Identity, Compose, Join
 import scrapy
-from trulia_scraper.parsing import remove_empty, get_number_from_string
+from trulia_scraper.parsing import *
+
+class overview_item(scrapy.Item):
+    url = scrapy.Field(
+        output_processor=Compose(TakeFirst())
+    )
+    address = scrapy.Field(
+        output_processor=Compose(TakeFirst())
+    )
+    city_state = scrapy.Field(
+        output_processor=Compose(TakeFirst())
+    )
+    price = scrapy.Field(
+        output_processor=Compose(TakeFirst(),get_number_from_string)
+    )  # for items on sale only
+    area = scrapy.Field(
+        output_processor=Compose(TakeFirst(), get_number_from_string)
+    )
+    bedrooms = scrapy.Field(
+        output_processor=Compose(TakeFirst(), float)
+    )
+    bathrooms = scrapy.Field(
+        output_processor= Compose(TakeFirst(), float)
+    )
+    year_built = scrapy.Field(
+        output_processor=Compose(TakeFirst(), int)
+    )
+    lot_size = scrapy.Field(
+        output_processor=Compose(TakeFirst(), get_number_from_string)
+    )
+    lot_size_units = scrapy.Field(
+        output_processor=Compose(TakeFirst())
+    )
+    price_per_square_foot = scrapy.Field(
+        output_processor=Compose(TakeFirst(), get_number_from_string)
+    )
+    days_on_Trulia = scrapy.Field(
+        output_processor=Compose(TakeFirst(), int)
+    )
+
+class basic_info_item(scrapy.Item):
+    url = scrapy.Field(
+        output_processor=Compose(TakeFirst())
+    )
+    address = scrapy.Field(
+        output_processor=Compose(TakeFirst())
+    )
+    city_state = scrapy.Field(
+        output_processor=Compose(TakeFirst())
+    )
+    price = scrapy.Field(
+        output_processor=Compose(TakeFirst(), get_number_from_string)
+    )  # for items on sale only
+    area = scrapy.Field(
+        output_processor=Compose(TakeFirst(), get_number_from_string)
+    )
+    bedrooms = scrapy.Field(
+        output_processor=Compose(TakeFirst(), float)
+    )
+    bathrooms = scrapy.Field(
+        output_processor=Compose(TakeFirst(), float)
+    )
+
+
+class price_item(scrapy.Item):
+    prices = scrapy.Field(
+        output_processor= Identity()
+    )
+    dates = scrapy.Field(
+        output_processor= Compose(remove_empty)
+    )
+    events = scrapy.Field(
+        output_processor= Compose(remove_empty)
+    )
+
+class taxes_item(scrapy.Item):
+    property_tax_assessment_year = scrapy.Field(
+        output_processor=Compose(TakeFirst(), int)
+    )
+    property_tax = scrapy.Field(
+        output_processor=Compose(TakeFirst(), get_number_from_string)
+    )
+    property_tax_assessment_land = scrapy.Field(
+        output_processor=Compose(TakeFirst(), get_number_from_string)
+    )
+    property_tax_assessment_improvements = scrapy.Field(
+        output_processor=Compose(TakeFirst(), get_number_from_string)
+    )
+    property_tax_assessment_total = scrapy.Field(
+        output_processor=Compose(TakeFirst(), get_number_from_string)
+    )
+
+class price_trends_item(scrapy.Item):
+    item1 = scrapy.Field(
+        output_processor=Compose(Join())
+    )
+    item2 = scrapy.Field(
+        output_processor=Compose(Join())
+    )
+    item3 = scrapy.Field(
+        output_processor=Compose(Join())
+    )
 
 
 class TruliaItem(scrapy.Item):
-    url = scrapy.Field()
-    address = scrapy.Field()
-    city_state = scrapy.Field()
-    price = scrapy.Field()              # for items on sale only
-    neighborhood = scrapy.Field()
     overview = scrapy.Field()
+    local_information = scrapy.Field() #todo
+
     description = scrapy.Field()
+    community_description = scrapy.Field()
+    home_detail = scrapy.Field()
+    office_hours = scrapy.Field()
+    open_house = scrapy.Field()
 
-    # Columns from the 'price events' table are stored in separate lists
-    prices = scrapy.Field()
-    dates = scrapy.Field()
-    events = scrapy.Field()
-
-    # Property tax information is on 'sold' pages only
-    property_tax_assessment_year = scrapy.Field()
-    property_tax = scrapy.Field()
-    property_tax_assessment_land = scrapy.Field()
-    property_tax_assessment_improvements = scrapy.Field()
-    property_tax_assessment_total = scrapy.Field()
-    property_tax_market_value = scrapy.Field()
-
-    # The 'Features' sections is on 'for sale' pages only
-    listing_information = scrapy.Field()
-    listing_information_date_updated = scrapy.Field()
-    public_records = scrapy.Field()
-    public_records_date_updated = scrapy.Field()
-
-    # Items generated from further parsing of 'raw' scraped data
-    area = scrapy.Field()
-    lot_size = scrapy.Field()
-    lot_size_units = scrapy.Field()
-    price_per_square_foot = scrapy.Field()      # For properties on sale only
-    bedrooms = scrapy.Field()
-    bathrooms = scrapy.Field()
-    year_built = scrapy.Field()
-    days_on_Trulia = scrapy.Field()
-    views = scrapy.Field()
     price_history = scrapy.Field()
+    similar_homes = scrapy.Field() #todo
+    new_listing = scrapy.Field() #todo
+
+    property_taxes = scrapy.Field()
+    price_trends = scrapy.Field()
+    comparable_sales = scrapy.Field()
+
+    local_commons = scrapy.Field() #todo
+    new_homes = scrapy.Field()
 
 
-class TruliaItemLoader(ItemLoader):
-    default_input_processor = MapCompose(str.strip)
-    default_output_processor = TakeFirst()
-
-    price_out = Compose(TakeFirst(), lambda s: int(s.replace(',', '')))
-    overview_out = Identity()
-    description_out = Compose(remove_empty)
-    prices_out = Identity()
-    dates_out = Compose(remove_empty)
-    events_out = Compose(remove_empty)
-
-    listing_information_out = Identity()
-    public_records_out = Identity()
-
-    area_out = Compose(TakeFirst(), get_number_from_string)
-    lot_size_out = Compose(TakeFirst(), get_number_from_string)
-    price_per_square_foot_out = Compose(TakeFirst(), get_number_from_string)
-    bedrooms_out = Compose(TakeFirst(), int)
-    bathrooms_out = Compose(TakeFirst(), int)
-    year_built_out = Compose(TakeFirst(), int)
-    days_on_Trulia_out = Compose(TakeFirst(), lambda s: int(s.replace(',', '')))
-    views_out = Compose(TakeFirst(), lambda s: int(s.replace(',', '')))

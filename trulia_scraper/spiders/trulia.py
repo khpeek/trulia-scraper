@@ -24,7 +24,7 @@ class TruliaSpider(scrapy.Spider):
     name = 'trulia'
     allowed_domains = ['trulia.com']
     custom_settings = {'FEED_URI': os.path.join(os.path.dirname(closest_scrapy_cfg()), 'data/data_for_sale_%(state)s_%(city)s_%(time)s.jl'), 
-                       'FEED_FORMAT': 'jsonlines',
+                       'FEED_FORMAT': 'json',
                        'FEED_EXPORT_FIELDS': cols}
 
     def __init__(self, state='CA', city='Mountain_View', *args, **kwargs):
@@ -32,7 +32,7 @@ class TruliaSpider(scrapy.Spider):
         self.state = state
         self.city = city
         # self.start_urls = ['http://trulia.com/{state}/{city}'.format(state=state, city=city)]
-        self.start_urls = ['http://trulia.com/{state}/{city}'.format(state=state, city=city)]
+        self.start_urls = ['http://trulia.com/{state}/{city}/94043'.format(state=state, city=city)]
         # self.le = LinkExtractor(allow=[r'^https://www.trulia.com/p/ca', r'^https://www.trulia.com/property', r'^https://www.trulia.com/builder-community'])
         self.link_path = '//div[@data-testid="search-result-list-container"]//a/@href'
 
